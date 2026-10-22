@@ -590,6 +590,7 @@ export class IndexerDB {
   getDerivedState(contractId: string): DerivedState | null {
     const contract = this.getContractState(contractId);
     if (!contract) return null;
+    archetypeCounts: new Map(),
 
     const state: DerivedState = {
       contract_id: contractId,
