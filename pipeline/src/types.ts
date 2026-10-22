@@ -254,6 +254,7 @@ export interface DerivedState {
   slashThreshold: number;
   name: string | null;
   symbol: string | null;
+  archetypeCounts: Map<number, Map<string, number>>;
 }
 
 // ─── Configuration ──────────────────────────────────────────────────────
