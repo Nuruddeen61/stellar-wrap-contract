@@ -430,11 +430,6 @@ export function applyStorageEntryToState(state: DerivedState, entry: StorageEntr
       adjustArchetypeCount(state, entry.key.period, entry.value.value.archetype, 1);
       break;
     }
-    const prev = userWraps.get(entry.key.period);
-if (prev) adjustArchetypeCount(state, entry.key.period, prev.archetype, -1);
-userWraps.set(entry.key.period, entry.value.value);
-adjustArchetypeCount(state, entry.key.period, entry.value.value.archetype, 1);
-    }
     case DataKeyVariant.WrapCount:
       state.userCounts.set(entry.key.user, entry.value.type === 'u32' ? entry.value.value : 0);
       break;
