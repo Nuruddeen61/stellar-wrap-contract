@@ -424,6 +424,12 @@ export function applyStorageEntryToState(state: DerivedState, entry: StorageEntr
         userWraps = new Map();
         state.wraps.set(user, userWraps);
       }
+      const prev = userWraps.get(entry.key.period);
+      if (prev) adjustArchetypeCount(state, entry.key.period, prev.archetype, -1);
+      userWraps.set(entry.key.period, entry.value.value);
+      adjustArchetypeCount(state, entry.key.period, entry.value.value.archetype, 1);
+      break;
+    }
     const prev = userWraps.get(entry.key.period);
 if (prev) adjustArchetypeCount(state, entry.key.period, prev.archetype, -1);
 userWraps.set(entry.key.period, entry.value.value);
