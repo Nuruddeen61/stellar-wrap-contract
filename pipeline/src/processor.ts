@@ -424,8 +424,10 @@ export function applyStorageEntryToState(state: DerivedState, entry: StorageEntr
         userWraps = new Map();
         state.wraps.set(user, userWraps);
       }
-      userWraps.set(entry.key.period, entry.value.value);
-      break;
+    const prev = userWraps.get(entry.key.period);
+if (prev) adjustArchetypeCount(state, entry.key.period, prev.archetype, -1);
+userWraps.set(entry.key.period, entry.value.value);
+adjustArchetypeCount(state, entry.key.period, entry.value.value.archetype, 1);
     }
     case DataKeyVariant.WrapCount:
       state.userCounts.set(entry.key.user, entry.value.type === 'u32' ? entry.value.value : 0);
@@ -489,6 +491,7 @@ export function persistStateToDB(
       slash_threshold: state.slashThreshold,
       ledger_seq: ledgerSeq,
     });
+    db.replaceArchetypeCounts(contractId, state.archetypeCounts);
 
     for (const [user, periodMap] of state.wraps) {
       for (const [period, record] of periodMap) {
