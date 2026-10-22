@@ -210,6 +210,7 @@ export function createEmptyState(contractId: string, ledgerSeq = 0): DerivedStat
     slashThreshold: 3,
     name: null,
     symbol: null,
+    archetypeCounts: new Map(),
   };
 }
 
