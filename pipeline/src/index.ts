@@ -1,9 +1,13 @@
+it-checkout--b-feat/archetype-counts-1059
 import { createApiServer } from './api';
 import { loadConfig } from './config';
+
+import { loadConfig, ConfigValidationError } from './config';
+ main
 import { IndexerDB } from './db';
 import { SorobanFetcher } from './fetcher';
 import { processEventBatch, createEmptyState, persistStateToDB } from './processor';
-import { backfillEvents } from './backfill';
+import { backfillEvents, detectRetentionGap } from './backfill';
 import { reconcile } from './reconciler';
 import type { DerivedState } from './types';
 
@@ -160,6 +164,9 @@ async function main(): Promise<void> {
   console.log(`Contract: ${config.contract_id}`);
   console.log(`RPC URL:  ${config.rpc_url}`);
   console.log(`DB Path:  ${config.db_path}`);
+  if (config.network_passphrase) {
+    console.log(`Network:  ${config.network_passphrase}`);
+  }
 
   // ── Reconcile-only mode ────────────────────────────────────────────
   if (config.reconcile_only) {
@@ -290,7 +297,11 @@ createApiServer(db, config.contract_id).listen(port, () => {
   // chain head instead of spinning on a ledger the chain has not produced.
   let startLedger: number;
   try {
-    startLedger = await resolveStartLedger(db, fetcher, config.contract_id, config.start_ledger);
+    const resumeLedger = await resolveStartLedger(db, fetcher, config.contract_id, config.start_ledger);
+    // Resuming below RPC's retention window would fail on every fetch, so
+    // record the unrecoverable range and skip ahead to the oldest retained ledger.
+    const retention = await detectRetentionGap(fetcher, db, config.contract_id, resumeLedger);
+    startLedger = retention.resumeLedger;
   } catch (err) {
     console.error(err instanceof Error ? err.message : err);
     db.close();
@@ -336,6 +347,11 @@ createApiServer(db, config.contract_id).listen(port, () => {
 }
 
 main().catch((err) => {
+  if (err instanceof ConfigValidationError) {
+    // The message already lists every invalid field, so it is printed as-is.
+    console.error(err.message);
+    process.exit(1);
+  }
   console.error('Fatal error:', err instanceof Error ? err.message : err);
   process.exit(1);
 });
